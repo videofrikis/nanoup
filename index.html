@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>RECARGAR LISTA DE CANALES EN NANOMID</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height: 1.4;
+      background: #fff;
+      color: #111;
+      display: grid;
+      place-items: start center;
+      padding: 24px;
+    }
+    .wrap { width: 100%; max-width: 560px; }
+    .card {
+      background: #fff; border-radius: 16px; border: 1px solid #eee;
+      box-shadow: 0 6px 20px rgba(0,0,0,.05); overflow: hidden;
+    }
+    .card-header { padding: 18px 20px; border-bottom: 1px solid #eee; }
+    .title { margin: 0; font-size: 1.15rem; font-weight: 800; text-align:center; }
+    .subtitle { margin: 6px 0 0; color: #5a5a5a; font-size: .95rem; text-align:center; }
+    .logo { display:flex; justify-content:center; margin-top: 12px; }
+    .logo img { max-width: 100%; height:auto; max-height: 120px; }
+    .card-body { padding: 20px; }
+    form { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; }
+    label { font-weight: 650; font-size: .95rem; }
+    input { width: 100%; padding: 12px 14px; border: 1px solid #dcdcdc; border-radius: 12px; font-size: 15px; }
+    input:focus { outline: none; border-color: #111; box-shadow: 0 0 0 4px rgba(0,0,0,.06); }
+    .actions { margin-top: 8px; }
+    button { width: 100%; padding: 14px 16px; border: 0; border-radius: 12px; font-weight: 800; font-size: 15px;
+      background: #111; color: #fff; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,.12); }
+    button[disabled]{ opacity:.6; cursor:not-allowed; box-shadow:none; }
+    .notice { margin-top: 16px; border: 1px solid #eee; background:#fafafa; border-radius: 12px; padding: 14px; }
+    .ok { color: #0a7c39; }
+    .err { color: #b00020; }
+    .template p { margin: 6px 0; }
+    .expired { color:#b00020; font-weight: 800; }
+    .renew { margin-top: 6px; }
+    .renew a { color:#0a58ca; text-decoration: underline; }
+    .footer { text-align:center; margin-top:14px; color:#777; font-size:.78rem; }
+    .otp-block { margin-top: 18px; text-align:center; }
+    .otp-title { font-weight: 800; margin: 0 0 8px; }
+    .otp-img img { max-width: 100%; height: auto; border-radius: 12px; border:1px solid #eee; }
+     .catalogo { margin-top: 14px; text-align: center; }
+  .catalogo a {
+    display: inline-block;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 15px;
+    text-decoration: none;
+    background: #111;     /* mismo estilo que el botón de Recargar */
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(0,0,0,.12);
+  }
+  .catalogo a:hover { transform: translateY(-1px); }
+  .catalogo a:active { transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="title">RECARGAR LISTA DE CANALES EN NANOMID</h1>
+        <p class="subtitle">Introduce tu <b>ID</b> (nº de pedido) y tu <b>CÓDIGO OTP</b> tal como aparece en tu app Nanomid.</p>
+        <!-- LOGO CENTRADO -->
+        <div class="logo">
+          <img id="logoImg" src="https://nanomid.com/_next/static/media/iconPlayer.493c21e3.png" alt="Nanomid" />
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- FORMULARIO -->
+        <form id="f" novalidate>
+          <div class="field">
+            <label for="orderId">ID (nº de pedido)</label>
+            <input id="orderId" name="orderId" type="text" autocomplete="off" placeholder="Ej: 12345" required />
+          </div>
+          <div class="field">
+            <label for="quickCode">CÓDIGO OTP</label>
+            <input id="quickCode" name="quickCode" type="text" autocomplete="one-time-code" placeholder="Ej: ABCDEF" maxlength="64" required />
+          </div>
+          <div class="actions">
+            <button id="btn" type="submit">Recargar</button>
+          </div>
+        </form>
+
+        <!-- RESULTADO -->
+        <div id="out" class="notice" hidden>
+          <div id="status"></div>
+          <div id="tpl" class="template"></div>
+          <pre id="details" style="display:none"></pre>
+          <div id="sent" style="display:none"></div>
+        </div>
+
+        <!-- GIF SIEMPRE VISIBLE -->
+<div class="otp-block">
+  <p class="otp-title">VER CÓDIGO OTP EN TV</p>
+  <div class="otp-img">
+    <img src="https://nanomid.com/_next/static/media/scan1.1c958ff7.gif" alt="Ver código OTP en TV" />
+  </div>
+  <!-- BOTÓN AL CATÁLOGO ONLINE -->
+<div class="catalogo">
+  <a href="https://elitesatstream.kyte.site/es" target="_blank" rel="noopener">
+    CATALÓGO ONLINE
+  </a>
+</div>
+</div>
+
+    <div class="footer">Contacto: https://elitesatstream.kyte.site/es </div>
+  </div>
+
+  <script>
+    const RENEW_URL = 'https://bit.ly/m/elitesatstream';
+
+    const form = document.getElementById('f');
+    const btn = document.getElementById('btn');
+    const out = document.getElementById('out');
+    const statusEl = document.getElementById('status');
+    const tplEl = document.getElementById('tpl');
+    const detailsEl = document.getElementById('details');
+    const sentEl = document.getElementById('sent');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const orderId = document.getElementById('orderId').value.trim();
+      const quickCode = document.getElementById('quickCode').value.trim();
+      if (!orderId || !quickCode) return;
+
+      btn.disabled = true; btn.textContent = 'Procesando…';
+      statusEl.textContent = ''; statusEl.className = '';
+      tplEl.innerHTML = ''; out.hidden = true;
+
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false; btn.textContent = 'Recargar';
+          out.hidden = false;
+
+          statusEl.className = 'ok';
+          statusEl.textContent = '✅ Lista de canales cargada correctamente.';
+
+          const p = res.order || {};
+          const dias = Number(p.diasRestantes);
+          let duracionHtml = '';
+
+          if (!isNaN(dias) && dias <= 0) {
+            duracionHtml = `
+              <p><b>Duración restante:</b> <span class="expired">CADUCADO</span></p>
+              <p class="renew">Puedes renovar tu lista de canales escribiendo
+                <a href="${RENEW_URL}" target="_blank" rel="noopener">AQUÍ</a>.
+              </p>`;
+          } else {
+            duracionHtml = `<p><b>Duración restante:</b> ${dias} día${dias===1?'':'s'}</p>`;
+          }
+
+          tplEl.innerHTML = [
+            `<p><b>Número de pedido:</b> ${p.id ?? ''}</p>`,
+            `<p><b>PRODUCTO:</b> ${p.servicio ?? ''}</p>`,
+            `<p><b>USUARIO:</b> ${p.usuario ?? ''}</p>`,
+            `<p><b>ALTA:</b> ${p.alta ?? ''}</p>`,
+            `<p><b>BAJA:</b> ${p.baja ?? ''}</p>`,
+            duracionHtml
+          ].join('');
+
+          form.reset();
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false; btn.textContent = 'Recargar';
+          out.hidden = false;
+
+          statusEl.className = 'err';
+          statusEl.textContent = '❌ Error al recargar';
+          tplEl.innerHTML = '';
+          detailsEl.style.display = 'block';
+          detailsEl.textContent = (err && err.message) ? err.message : String(err);
+        })
+        .recargarLista(orderId, quickCode);
+    });
+  </script>
+</body>
+</html>
