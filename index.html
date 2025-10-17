@@ -48,20 +48,14 @@
     .otp-block { margin-top: 18px; text-align:center; }
     .otp-title { font-weight: 800; margin: 0 0 8px; }
     .otp-img img { max-width: 100%; height: auto; border-radius: 12px; border:1px solid #eee; }
-     .catalogo { margin-top: 14px; text-align: center; }
-  .catalogo a {
-    display: inline-block;
-    padding: 12px 18px;
-    border-radius: 12px;
-    font-weight: 800;
-    font-size: 15px;
-    text-decoration: none;
-    background: #111;     /* mismo estilo que el botón de Recargar */
-    color: #fff;
-    box-shadow: 0 6px 16px rgba(0,0,0,.12);
-  }
-  .catalogo a:hover { transform: translateY(-1px); }
-  .catalogo a:active { transform: translateY(0); }
+    .catalogo { margin-top: 14px; text-align: center; }
+    .catalogo a {
+      display: inline-block; padding: 12px 18px; border-radius: 12px;
+      font-weight: 800; font-size: 15px; text-decoration: none;
+      background: #111; color: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.12);
+    }
+    .catalogo a:hover { transform: translateY(-1px); }
+    .catalogo a:active { transform: translateY(0); }
   </style>
 </head>
 <body>
@@ -101,100 +95,102 @@
         </div>
 
         <!-- GIF SIEMPRE VISIBLE -->
-<div class="otp-block">
-  <p class="otp-title">VER CÓDIGO OTP EN TV</p>
-  <div class="otp-img">
-    <img src="https://nanomid.com/_next/static/media/scan1.1c958ff7.gif" alt="Ver código OTP en TV" />
+        <div class="otp-block">
+          <p class="otp-title">VER CÓDIGO OTP EN TV</p>
+          <div class="otp-img">
+            <img src="https://nanomid.com/_next/static/media/scan1.1c958ff7.gif" alt="Ver código OTP en TV" />
+          </div>
+          <!-- BOTÓN AL CATÁLOGO ONLINE -->
+          <div class="catalogo">
+            <a href="https://elitesatstream.kyte.site/es" target="_blank" rel="noopener">CATÁLOGO ONLINE</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Contacto: <a href="https://elitesatstream.kyte.site/es" target="_blank" rel="noopener">https://elitesatstream.kyte.site/es</a></div>
   </div>
-  <!-- BOTÓN AL CATÁLOGO ONLINE -->
-<div class="catalogo">
-  <a href="https://elitesatstream.kyte.site/es" target="_blank" rel="noopener">
-    CATALÓGO ONLINE
-  </a>
-</div>
-</div>
 
-    <div class="footer">Contacto: https://elitesatstream.kyte.site/es </div>
-  </div>
-<!-- Config del backend -->
-<script>
-  const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbw0PyDXUZD_4LxjGDTqrFdtYxOT7LnHM0cRSGEdYQmGP2dI6-tbHDdsXqyR7RzHp8XHLg/exec';
-  const PUBLIC_TOKEN = 's3cr3t_123';
-</script>
+  <!-- Config del backend -->
+  <script>
+    const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbw0PyDXUZD_4LxjGDTqrFdtYxOT7LnHM0cRSGEdYQmGP2dI6-tbHDdsXqyR7RzHp8XHLg/exec';
+    const PUBLIC_TOKEN = 's3cr3t_123';
+  </script>
 
-<!-- Script principal -->
-<script>
-  const form = document.getElementById('f');
-  const btn = document.getElementById('btn');
-  const out = document.getElementById('out');
-  const statusEl = document.getElementById('status');
-  const tplEl = document.getElementById('tpl');
-  const detailsEl = document.getElementById('details');
+  <!-- Script principal -->
+  <script>
+    const form = document.getElementById('f');
+    const btn = document.getElementById('btn');
+    const out = document.getElementById('out');
+    const statusEl = document.getElementById('status');
+    const tplEl = document.getElementById('tpl');
+    const detailsEl = document.getElementById('details');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const orderId = document.getElementById('orderId').value.trim();
-    const quickCode = document.getElementById('quickCode').value.trim();
-    if (!orderId || !quickCode) return;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const orderId = document.getElementById('orderId').value.trim();
+      const quickCode = document.getElementById('quickCode').value.trim();
+      if (!orderId || !quickCode) return;
 
-    btn.disabled = true; btn.textContent = 'Procesando…';
-    statusEl.textContent = ''; statusEl.className = '';
-    tplEl.innerHTML = ''; out.hidden = true;
+      btn.disabled = true; btn.textContent = 'Procesando…';
+      statusEl.textContent = ''; statusEl.className = '';
+      tplEl.innerHTML = ''; out.hidden = true;
 
-    try {
-      // 👇 Llamada a tu Apps Script con token en el body
-      const resp = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, quickCode, token: PUBLIC_TOKEN })
-      });
-      const data = await resp.json();
+      try {
+        // Enviar como text/plain para evitar preflight (OPTIONS) en Apps Script
+        const resp = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ orderId, quickCode, token: PUBLIC_TOKEN })
+        });
+        const data = await resp.json();
 
-      btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
+        btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
 
-      if (data.ok) {
-        statusEl.className = 'ok';
-        statusEl.textContent = '✅ Lista de canales cargada correctamente.';
+        if (data.ok) {
+          statusEl.className = 'ok';
+          statusEl.textContent = '✅ Lista de canales cargada correctamente.';
 
-        const p = data.order || {};
-        const dias = Number(p.diasRestantes);
-        const RENEW_URL = 'https://bit.ly/m/elitesatstream';
+          const p = data.order || {};
+          const dias = Number(p.diasRestantes);
+          const RENEW_URL = 'https://bit.ly/m/elitesatstream';
 
-        let duracionHtml = '';
-        if (!isNaN(dias) && dias <= 0) {
-          duracionHtml = `
-            <p><b>Duración restante:</b> <span class="expired">CADUCADO</span></p>
-            <p class="renew">Puedes renovar tu lista de canales escribiendo
-              <a href="${RENEW_URL}" target="_blank" rel="noopener">AQUÍ</a>.
-            </p>`;
+          let duracionHtml = '';
+          if (!isNaN(dias) && dias <= 0) {
+            duracionHtml = `
+              <p><b>Duración restante:</b> <span class="expired">CADUCADO</span></p>
+              <p class="renew">Puedes renovar tu lista de canales escribiendo
+                <a href="${RENEW_URL}" target="_blank" rel="noopener">AQUÍ</a>.
+              </p>`;
+          } else {
+            duracionHtml = `<p><b>Duración restante:</b> ${dias} día${dias===1?'':'s'}</p>`;
+          }
+
+          tplEl.innerHTML = [
+            `<p><b>Número de pedido:</b> ${p.id ?? ''}</p>`,
+            `<p><b>PRODUCTO:</b> ${p.servicio ?? ''}</p>`,
+            `<p><b>USUARIO:</b> ${p.usuario ?? ''}</p>`,
+            `<p><b>ALTA:</b> ${p.alta ?? ''}</p>`,
+            `<p><b>BAJA:</b> ${p.baja ?? ''}</p>`,
+            duracionHtml
+          ].join('');
+
+          form.reset();
         } else {
-          duracionHtml = `<p><b>Duración restante:</b> ${dias} día${dias===1?'':'s'}</p>`;
+          statusEl.className = 'err';
+          statusEl.textContent = '❌ Error al recargar';
+          detailsEl.style.display = 'block';
+          detailsEl.textContent = data.error || 'Fallo desconocido.';
         }
-
-        tplEl.innerHTML = [
-          `<p><b>Número de pedido:</b> ${p.id ?? ''}</p>`,
-          `<p><b>PRODUCTO:</b> ${p.servicio ?? ''}</p>`,
-          `<p><b>USUARIO:</b> ${p.usuario ?? ''}</p>`,
-          `<p><b>ALTA:</b> ${p.alta ?? ''}</p>`,
-          `<p><b>BAJA:</b> ${p.baja ?? ''}</p>`,
-          duracionHtml
-        ].join('');
-
-        form.reset();
-      } else {
+      } catch (err) {
+        btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
         statusEl.className = 'err';
-        statusEl.textContent = '❌ Error al recargar';
+        statusEl.textContent = '❌ Error de red';
         detailsEl.style.display = 'block';
-        detailsEl.textContent = data.error || 'Fallo desconocido.';
+        detailsEl.textContent = String(err);
       }
-    } catch (err) {
-      btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
-      statusEl.className = 'err';
-      statusEl.textContent = '❌ Error de red';
-      detailsEl.style.display = 'block';
-      detailsEl.textContent = String(err);
-    }
-  });
-</script>
+    });
+  </script>
 </body>
 </html>
+
