@@ -116,75 +116,82 @@
   </script>
 
   <!-- JS: llamar a Apps Script con fetch (NO google.script.run) -->
-  <script>
-    const form = document.getElementById('f');
-    const btn = document.getElementById('btn');
-    const out = document.getElementById('out');
-    const statusEl = document.getElementById('status');
-    const tplEl = document.getElementById('tpl');
-    const detailsEl = document.getElementById('details');
+<script>
+  const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbyrg7iGmvwH0RDIwWsz_y0sWjyKfQ7enJAXusQ53aHLBq7vB6XVoD_0XgWH6Pwt9srl/exec';
+  const PUBLIC_TOKEN = 's3cr3t_123';
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  const form = document.getElementById('f');
+  const btn = document.getElementById('btn');
+  const out = document.getElementById('out');
+  const statusEl = document.getElementById('status');
+  const tplEl = document.getElementById('tpl');
+  const detailsEl = document.getElementById('details');
 
-      const orderId = document.getElementById('orderId').value.trim();
-      const quickCode = document.getElementById('quickCode').value.trim();
-      if (!orderId || !quickCode) return;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-      btn.disabled = true; btn.textContent = 'Procesando…';
-      out.hidden = true; statusEl.textContent = ''; statusEl.className = '';
-      tplEl.innerHTML = ''; detailsEl.style.display = 'none'; detailsEl.textContent = '';
+    const orderId = document.getElementById('orderId').value.trim();
+    const quickCode = document.getElementById('quickCode').value.trim();
+    if (!orderId || !quickCode) return;
 
-      try {
-        const resp = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId, quickCode, token: PUBLIC_TOKEN })
-        });
+    btn.disabled = true; btn.textContent = 'Procesando…';
+    out.hidden = true; statusEl.textContent = ''; statusEl.className = '';
+    tplEl.innerHTML = ''; detailsEl.style.display = 'none'; detailsEl.textContent = '';
 
-        const data = await resp.json();
+    try {
+      // Evita preflight: text/plain es "simple"
+      const resp = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify({ orderId, quickCode, token: PUBLIC_TOKEN })
+      });
 
-        btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
+      // Si por lo que sea no viene JSON (p.ej. HTML), muéstralo en texto
+      const raw = await resp.text();
+      let data;
+      try { data = JSON.parse(raw); } catch { data = { ok:false, error:'Respuesta no JSON', raw }; }
 
-        if (data && data.ok) {
-          statusEl.className = 'ok';
-          statusEl.textContent = '✅ Lista de canales cargada correctamente.';
-          const p = data.order || {};
-          const dias = Number(p.diasRestantes);
-          const RENEW_URL = 'https://bit.ly/m/elitesatstream';
-          let duracionHtml = '';
-          if (!isNaN(dias) && dias <= 0) {
-            duracionHtml = `
-              <p><b>Duración restante:</b> <span class="expired">CADUCADO</span></p>
-              <p class="renew">Puedes renovar tu lista de canales escribiendo
-                <a href="${RENEW_URL}" target="_blank" rel="noopener">AQUÍ</a>.
-              </p>`;
-          } else if (!isNaN(dias)) {
-            duracionHtml = `<p><b>Duración restante:</b> ${dias} día${dias===1?'':'s'}</p>`;
-          }
-          tplEl.innerHTML = [
-            `<p><b>Número de pedido:</b> ${p.id ?? ''}</p>`,
-            `<p><b>PRODUCTO:</b> ${p.servicio ?? ''}</p>`,
-            `<p><b>USUARIO:</b> ${p.usuario ?? ''}</p>`,
-            `<p><b>ALTA:</b> ${p.alta ?? ''}</p>`,
-            `<p><b>BAJA:</b> ${p.baja ?? ''}</p>`,
-            duracionHtml
-          ].join('');
-          form.reset();
-        } else {
-          statusEl.className = 'err';
-          statusEl.textContent = '❌ Error al recargar';
-          detailsEl.style.display = 'block';
-          detailsEl.textContent = (data && data.error) ? data.error : 'Fallo desconocido.';
+      btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
+
+      if (data && data.ok) {
+        statusEl.className = 'ok';
+        statusEl.textContent = '✅ Lista de canales cargada correctamente.';
+        const p = data.order || {};
+        const dias = Number(p.diasRestantes);
+        const RENEW_URL = 'https://bit.ly/m/elitesatstream';
+        let duracionHtml = '';
+        if (!isNaN(dias) && dias <= 0) {
+          duracionHtml = `
+            <p><b>Duración restante:</b> <span class="expired">CADUCADO</span></p>
+            <p class="renew">Puedes renovar tu lista de canales escribiendo
+              <a href="${RENEW_URL}" target="_blank" rel="noopener">AQUÍ</a>.
+            </p>`;
+        } else if (!isNaN(dias)) {
+          duracionHtml = `<p><b>Duración restante:</b> ${dias} día${dias===1?'':'s'}</p>`;
         }
-      } catch (err) {
-        btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
+        tplEl.innerHTML = [
+          `<p><b>Número de pedido:</b> ${p.id ?? ''}</p>`,
+          `<p><b>PRODUCTO:</b> ${p.servicio ?? ''}</p>`,
+          `<p><b>USUARIO:</b> ${p.usuario ?? ''}</p>`,
+          `<p><b>ALTA:</b> ${p.alta ?? ''}</p>`,
+          `<p><b>BAJA:</b> ${p.baja ?? ''}</p>`,
+          duracionHtml
+        ].join('');
+        form.reset();
+      } else {
         statusEl.className = 'err';
-        statusEl.textContent = '❌ Error de red';
+        statusEl.textContent = '❌ Error al recargar';
         detailsEl.style.display = 'block';
-        detailsEl.textContent = String(err);
+        detailsEl.textContent = data.error || data.raw || 'Fallo desconocido.';
       }
-    });
-  </script>
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
+      statusEl.className = 'err';
+      statusEl.textContent = '❌ Error de red';
+      detailsEl.style.display = 'block';
+      detailsEl.textContent = String(err);
+    }
+  });
+</script>
 </body>
 </html>
