@@ -214,11 +214,14 @@
 
     try {
       // 👉 llamada a Apps Script con token
-      const resp = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, quickCode, token: PUBLIC_TOKEN })
-      });
+const resp = await fetch(SCRIPT_URL, {
+  method: 'POST',
+  // ⚠️ IMPORTANTE: NO usar application/json aquí para evitar el preflight CORS
+  headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+  body: JSON.stringify({ orderId, quickCode, token: PUBLIC_TOKEN })
+});
+const data = await resp.json();
+
 
       // Si GAS devolviese 403/401/500, mostramos texto crudo
       if (!resp.ok) {
