@@ -185,114 +185,112 @@
 
     <div class="footer">Contacto: <a href="https://elitesatstream.kyte.site/es" target="_blank" rel="noopener">https://elitesatstream.kyte.site/es</a></div>
   </div>
-<script>
-  // 👉 Pega aquí TU URL de Apps Script (la de /exec) y el token que pusiste en Script Properties
-  const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbw5nRLeCkUDBZDq-WErrysvfNdiath4Z00Dgiyb4T1uRBITmOiX4CrKcqfPc8BU-Bt5/exec';
-  const PUBLIC_TOKEN = 's3cr3t_123';
-</script>
+
   <script>
-  const form = document.getElementById('f');
-  const btn = document.getElementById('btn');
-  const out = document.getElementById('out');
-  const statusEl = document.getElementById('status');
-  const tplEl = document.getElementById('tpl');
-  const detailsEl = document.getElementById('details');
+    /* 👉 TU URL /exec y token (igual al de Script Properties) */
+    const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbw5nRLeCkUDBZDq-WErrysvfNdiath4Z00Dgiyb4T1uRBITmOiX4CrKcqfPc8BU-Bt5/exec';
+    const PUBLIC_TOKEN = 's3cr3t_123';
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    const form      = document.getElementById('f');
+    const btn       = document.getElementById('btn');
+    const out       = document.getElementById('out');
+    const statusEl  = document.getElementById('status');
+    const tplEl     = document.getElementById('tpl');
+    const detailsEl = document.getElementById('details');
 
-    const orderId = document.getElementById('orderId').value.trim();
-    const quickCode = document.getElementById('quickCode').value.trim();
-    if (!orderId || !quickCode) return;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-    // UI preparando
-    btn.disabled = true; btn.textContent = 'Procesando…';
-    out.hidden = true;
-    statusEl.textContent = ''; statusEl.className = '';
-    tplEl.innerHTML = '';
-    detailsEl.style.display = 'none'; detailsEl.textContent = '';
+      const orderId   = document.getElementById('orderId').value.trim();
+      const quickCode = document.getElementById('quickCode').value.trim();
+      if (!orderId || !quickCode) return;
 
-    try {
-      // 👉 llamada a Apps Script con token
-const resp = await fetch(SCRIPT_URL, {
-  method: 'POST',
-  // ⚠️ IMPORTANTE: NO usar application/json aquí para evitar el preflight CORS
-  headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-  body: JSON.stringify({ orderId, quickCode, token: PUBLIC_TOKEN })
-});
-const data = await resp.json();
+      // UI preparando
+      btn.disabled = true; btn.textContent = 'Procesando…';
+      out.hidden = true;
+      statusEl.textContent = ''; statusEl.className = '';
+      tplEl.innerHTML = '';
+      detailsEl.style.display = 'none'; detailsEl.textContent = '';
 
+      try {
+        // ⛔ text/plain para evitar preflight CORS
+        const resp = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ orderId, quickCode, token: PUBLIC_TOKEN })
+        });
 
-      // Si GAS devolviese 403/401/500, mostramos texto crudo
-      if (!resp.ok) {
-        const txt = await resp.text().catch(()=> '');
-        throw new Error(`HTTP ${resp.status} ${resp.statusText} - ${txt}`);
-      }
-
-      const data = await resp.json();
-
-      btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
-
-      if (data && data.ok) {
-        statusEl.className = 'ok';
-        statusEl.textContent = '✅ Lista de canales cargada correctamente.';
-
-        const p = data.order || {};
-        const dias = Number(p.diasRestantes);
-        const RENEW_URL = 'https://bit.ly/m/elitesatstream';
-
-        let duracionHtml = '';
-        if (!isNaN(dias) && dias <= 0) {
-          duracionHtml = `
-            <p><b>Duración restante:</b> <span class="expired">CADUCADO</span></p>
-            <p class="renew">Puedes renovar tu lista de canales escribiendo
-              <a href="${RENEW_URL}" target="_blank" rel="noopener">AQUÍ</a>.
-            </p>`;
-        } else if (!isNaN(dias)) {
-          duracionHtml = `<p><b>Duración restante:</b> ${dias} día${dias===1?'':'s'}</p>`;
+        // Primero comprobamos el estado
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => '');
+          throw new Error(`HTTP ${resp.status} ${resp.statusText} - ${txt}`);
         }
 
-        const notasHtml = `
-          <div class="note-box">
-            <p>📌 <b>Recuerda</b> que usar la misma lista de canales en varios dispositivos puede
-            provocar bloqueo de la lista y pérdida de acceso. La lista se vende para <b>1 sola pantalla</b>.
-            Si el servidor detecta multipantallas se bloqueará automáticamente.</p>
+        // Luego parseamos JSON (una sola vez)
+        const data = await resp.json();
 
-            <p>📌 Si eres <b>ciudadano español</b> recomendamos tener activo el <b>VPN PASS</b> para
-            evitar bloqueos del operador de Internet.</p>
+        btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
 
-            <p>📌 Si ya dispones de <b>VPN PASS</b> en Nanomid, es <b>IMPORTANTE</b> no cambiar de país
-            rápidamente. Usa siempre la VPN en el mismo país (p. ej. <b>Francia</b> o <b>UK</b>).
-            Cambios de IP frecuentes pueden bloquear la línea y su desbloqueo puede tardar varios días.</p>
-          </div>
-        `;
+        if (data && data.ok) {
+          statusEl.className = 'ok';
+          statusEl.textContent = '✅ Lista de canales cargada correctamente.';
 
-        tplEl.innerHTML = [
-          `<p><b>Número de pedido:</b> ${p.id ?? ''}</p>`,
-          `<p><b>PRODUCTO:</b> ${p.servicio ?? ''}</p>`,
-          `<p><b>USUARIO:</b> ${p.usuario ?? ''}</p>`,
-          `<p><b>ALTA:</b> ${p.alta ?? ''}</p>`,
-          `<p><b>BAJA:</b> ${p.baja ?? ''}</p>`,
-          duracionHtml,
-          notasHtml
-        ].join('');
+          const p    = data.order || {};
+          const dias = Number(p.diasRestantes);
+          const RENEW_URL = 'https://bit.ly/m/elitesatstream';
 
-        form.reset();
-      } else {
+          let duracionHtml = '';
+          if (!isNaN(dias) && dias <= 0) {
+            duracionHtml = `
+              <p><b>Duración restante:</b> <span class="expired">CADUCADO</span></p>
+              <p class="renew">Puedes renovar tu lista de canales escribiendo
+                <a href="${RENEW_URL}" target="_blank" rel="noopener">AQUÍ</a>.
+              </p>`;
+          } else if (!isNaN(dias)) {
+            duracionHtml = `<p><b>Duración restante:</b> ${dias} día${dias===1?'':'s'}</p>`;
+          }
+
+          const notasHtml = `
+            <div class="note-box">
+              <p>📌 <b>Recuerda</b> que usar la misma lista de canales en varios dispositivos puede
+              provocar bloqueo de la lista y pérdida de acceso. La lista se vende para <b>1 sola pantalla</b>.
+              Si el servidor detecta multipantallas se bloqueará automáticamente.</p>
+
+              <p>📌 Si eres <b>ciudadano español</b> recomendamos tener activo el <b>VPN PASS</b> para
+              evitar bloqueos del operador de Internet.</p>
+
+              <p>📌 Si ya dispones de <b>VPN PASS</b> en Nanomid, es <b>IMPORTANTE</b> no cambiar de país
+              rápidamente. Usa siempre la VPN en el mismo país (p. ej. <b>Francia</b> o <b>UK</b>).
+              Cambios de IP frecuentes pueden bloquear la línea y su desbloqueo puede tardar varios días.</p>
+            </div>
+          `;
+
+          tplEl.innerHTML = [
+            `<p><b>Número de pedido:</b> ${p.id ?? ''}</p>`,
+            `<p><b>PRODUCTO:</b> ${p.servicio ?? ''}</p>`,
+            `<p><b>USUARIO:</b> ${p.usuario ?? ''}</p>`,
+            `<p><b>ALTA:</b> ${p.alta ?? ''}</p>`,
+            `<p><b>BAJA:</b> ${p.baja ?? ''}</p>`,
+            duracionHtml,
+            notasHtml
+          ].join('');
+
+          form.reset();
+        } else {
+          statusEl.className = 'err';
+          statusEl.textContent = '❌ Error al recargar';
+          detailsEl.style.display = 'block';
+          detailsEl.textContent = (data && data.error) ? data.error : 'Fallo desconocido';
+        }
+      } catch (err) {
+        btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
         statusEl.className = 'err';
-        statusEl.textContent = '❌ Error al recargar';
+        statusEl.textContent = '❌ Error de red';
         detailsEl.style.display = 'block';
-        detailsEl.textContent = (data && data.error) ? data.error : 'Fallo desconocido';
+        detailsEl.textContent = String(err);
+        console.error(err);
       }
-
-    } catch (err) {
-      btn.disabled = false; btn.textContent = 'Recargar'; out.hidden = false;
-      statusEl.className = 'err';
-      statusEl.textContent = '❌ Error de red';
-      detailsEl.style.display = 'block';
-      detailsEl.textContent = String(err);
-    }
-  });
-</script>
+    });
+  </script>
 </body>
 </html>
